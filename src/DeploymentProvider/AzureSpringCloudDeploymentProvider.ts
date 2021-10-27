@@ -32,8 +32,6 @@ export class AzureSpringCloudDeploymentProvider {
             throw new Error('ResourceDoesntExist' + this.params.ServiceName);
         }
         else if (filteredResources.length == 1) {
-            core.debug("filteredResources:\n" + JSON.stringify(filteredResources));
-            core.debug("id:\n" + filteredResources[0].id);
             const beginStr = '/resourceGroups/';
             const endStr = '/providers/Microsoft.AppPlatform/Spring'
             const beginIndex = filteredResources[0].id.indexOf(beginStr) + beginStr.length;
@@ -43,13 +41,13 @@ export class AzureSpringCloudDeploymentProvider {
                 throw new Error('ResourceGroupNameParseError');
             }
             this.params.ResourceGroupName = filteredResources[0].id.substring(beginIndex, endIndex);
-            core.debug("ResourceGroupName:\n" + this.params.ResourceGroupName);
+            core.debug("resource group name: " + this.params.ResourceGroupName);
         }
         else { //Should never ever ever happen
             throw new Error('DuplicateAzureSpringCloudName');
         }
         const serviceResponse = await this.client.services.get(this.params.ResourceGroupName, this.params.ServiceName);
-        core.debug("service response:\n" + serviceResponse._response.bodyAsText);
+        core.debug("service response: " + serviceResponse._response.bodyAsText);
     }
 
     public async DeployAppStep() {
@@ -76,18 +74,20 @@ export class AzureSpringCloudDeploymentProvider {
     }
 
     private async performDeleteStagingDeploymentAction() {
-        core.debug('Delete staging deployment action');
+        console.log('Delete staging deployment action');
         const deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
+        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
         if (deploymentName) {
             await this.client.deployments.deleteMethod(this.params.ResourceGroupName, this.params.ServiceName, this.params.AppName, deploymentName);
         } else {
             throw Error('NoStagingDeploymentFound');
         }
+        console.log('Delete staging deployment action successful');
         return deploymentName;
     }
 
     private async performSetProductionAction() {
-        core.debug('Set production action for app ' + this.params.AppName);
+        console.log('Set production action');
         let deploymentName: string;
         if (this.params.UseStagingDeployment) {
             core.debug('Targeting inactive deployment');
@@ -102,15 +102,16 @@ export class AzureSpringCloudDeploymentProvider {
             deploymentName = this.params.DeploymentName;
             let existingStagingDeploymentName: string = await dh.getStagingDeploymentName(this.client, this.params);
             if (deploymentName != existingStagingDeploymentName) {
-                throw Error('StagingDeploymentWithNameDoesntExist' + deploymentName);
+                throw Error('StagingDeploymentWithNameNotExist:' + deploymentName);
             }
         }
-
+        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
         await dh.setActiveDeployment(this.client, this.params);
+        console.log('Set production action successful');
     }
 
     private async performDeployAction() {
-        core.debug('Deployment action');
+        console.log('Deploy action');
 
         let sourceType: string = this.determineSourceType(this.params.Package);
 
@@ -152,7 +153,9 @@ export class AzureSpringCloudDeploymentProvider {
             }
         }
         try {
+            console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
             await dh.deploy(this.client, this.params, sourceType, fileToUpload);
+            console.log('Deploy action successful');
         } catch (error) {
             throw error;
         }
@@ -164,14 +167,14 @@ export class AzureSpringCloudDeploymentProvider {
      */
     async compressSourceDirectory(sourceDirectoryPath: string): Promise<string> {
         const fileName = `${uuidv4()}.tar.gz`;
-        console.log('CompressingSourceDirectory', sourceDirectoryPath, fileName);
+        core.debug(`CompressingSourceDirectory ${sourceDirectoryPath} ${fileName}`);
         await tar.c({
             gzip: true,
             file: fileName,
             sync: true,
             cwd: sourceDirectoryPath,
             onWarn: warning => {
-                console.warn(warning);
+                core.warning(warning);
             }
         }, ['.']);
         return fileName;
