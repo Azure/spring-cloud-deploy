@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { v4 as uuidv4 } from 'uuid';
 import { Package, PackageType } from 'azure-actions-utility/packageUtility';
-import { Actions, TaskParameters, TaskParametersUtility } from '../operations/taskparameters';
+import { Actions, ActionParameters, ActionParametersUtility } from '../operations/actionParameters';
 import { AppPlatformManagementClient, AppPlatformManagementModels as Models } from '@azure/arm-appplatform'
 import { getDefaultAzureCredential } from '@azure/identity'
 import { DeploymentHelper as dh } from "./DeploymentHelper";
@@ -11,11 +11,11 @@ export class AzureSpringCloudDeploymentProvider {
 
     defaultInactiveDeploymentName = 'staging';
 
-    protected params: TaskParameters;
-    protected client: AppPlatformManagementClient;
+    params: ActionParameters;
+    client: AppPlatformManagementClient;
 
     constructor() {
-        this.params = TaskParametersUtility.getParameters();
+        this.params = ActionParametersUtility.getParameters();
     }
 
     public async PreDeploymentStep() {
@@ -76,9 +76,10 @@ export class AzureSpringCloudDeploymentProvider {
     private async performDeleteStagingDeploymentAction() {
         console.log('Delete staging deployment action');
         const deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
+        this.params.DeploymentName = deploymentName;
         console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
         if (deploymentName) {
-            await this.client.deployments.deleteMethod(this.params.ResourceGroupName, this.params.ServiceName, this.params.AppName, deploymentName);
+            await dh.deleteDeployment(this.client, this.params);
         } else {
             throw Error('NoStagingDeploymentFound');
         }

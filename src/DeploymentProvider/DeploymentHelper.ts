@@ -1,11 +1,11 @@
-import { Actions, TaskParameters } from '../operations/taskparameters';
+import { Actions, ActionParameters } from '../operations/actionParameters';
 import { AppPlatformManagementClient, AppPlatformManagementModels as Models } from '@azure/arm-appplatform'
 import { uploadFileToSasUrl } from "./azure-storage";
 import * as core from "@actions/core";
 import { parse } from 'azure-actions-utility/parameterParserUtility';
 
 export class DeploymentHelper {
-    public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: TaskParameters): Promise<string> {
+    public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.ResourceGroupName, params.ServiceName, params.AppName);
         let ret: string;
         deployments.forEach(deployment => {
@@ -17,19 +17,10 @@ export class DeploymentHelper {
                 core.debug("active deployment name:" + deployment.name);
             }
         });
-        // for (const deploymentAny in deployments) {
-        //     const deployment = deploymentAny as Models.DeploymentResource;
-        //     console.log("deploymentAny:" + deploymentAny);
-        //     console.log("deployment:" + deployment);
-        //     console.log('Task parameters: ' + JSON.stringify(deployment));
-        //     if (deployment?.properties?.active == false) {
-        //         return deployment.name;
-        //     }
-        // }
         return ret;
     }
 
-    public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: TaskParameters): Promise<Array<string>> {
+    public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
         let names: Array<string> = [];
         const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.ResourceGroupName, params.ServiceName, params.AppName);
         deployments.forEach(deployment => {
@@ -37,14 +28,10 @@ export class DeploymentHelper {
             console.log('deployment str: ' + JSON.stringify(deployment));
             names.push(deployment.name);
         });
-        // for (const deploymentAny in deployments) {
-        //     const deployment = deploymentAny as Models.DeploymentResource;
-        //     names.push(deployment.name);
-        // }
         return names;
     }
 
-    public static async setActiveDeployment(client: AppPlatformManagementClient, params: TaskParameters) {
+    public static async setActiveDeployment(client: AppPlatformManagementClient, params: ActionParameters) {
         let appResource: Models.AppResource = {
             properties: {
                 activeDeploymentName: params.DeploymentName
@@ -54,7 +41,7 @@ export class DeploymentHelper {
         return;
     }
 
-    public static async deploy(client: AppPlatformManagementClient, params: TaskParameters, sourceType: string, fileToUpload: string) {
+    public static async deploy(client: AppPlatformManagementClient, params: ActionParameters, sourceType: string, fileToUpload: string) {
         let uploadResponse: Models.AppsGetResourceUploadUrlResponse = await client.apps.getResourceUploadUrl(params.ResourceGroupName, params.ServiceName, params.AppName);
         await uploadFileToSasUrl(uploadResponse.uploadUrl, fileToUpload);
         let transformedEnvironmentVariables = {};
@@ -67,15 +54,6 @@ export class DeploymentHelper {
             });
             core.debug('Environment Variables: ' + JSON.stringify(transformedEnvironmentVariables));
         }
-        // todo trans envs
-        // let envs : Array<string> = params.EnvironmentVariables.split(',');
-        // let envVars = {};
-        // for(let env in envs) {
-        //     let index: number = env.indexOf(':');
-        //     let key: string = env.substring(0, index);
-        //     let value: string = env.substring(index+1);
-        //     envVars[key] = value;
-        // }
         let deploymentResource: Models.DeploymentResource = {
             properties: {
                 source: {
@@ -97,8 +75,8 @@ export class DeploymentHelper {
         return;
     }
 
-    // public static async getEndpoint(client: AppPlatformManagementClient, params: TaskParameters): Promise<string> {
-    //     await client.deployments.get(params.ResourceGroupName, params.ServiceName, params.AppName, params.DeploymentName).
-    // }
-
+    public static async deleteDeployment(client: AppPlatformManagementClient, params: ActionParameters) {
+        await client.deployments.deleteMethod(params.ResourceGroupName, params.ServiceName, params.AppName, params.DeploymentName);
+        return;
+    }
 }

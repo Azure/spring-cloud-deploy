@@ -24,10 +24,10 @@ export class Actions {
     public static readonly deleteStagingDeployment = 'Delete Staging Deployment';
 }
 
-export class TaskParametersUtility {
-    public static getParameters(): TaskParameters {
-        console.log('Started getParameters');
-        var taskParameters: TaskParameters = {
+export class ActionParametersUtility {
+    public static getParameters(): ActionParameters {
+        core.debug('Started getParameters');
+        var taskParameters: ActionParameters = {
             AzureSubscription: core.getInput(Inputs.azureSubscription, {"required": true}),
             //ResourceGroupName: core.getInput(Inputs.resourceGroupName, {"required":true}),
             ServiceName: core.getInput(Inputs.serviceName, {"required": true}),
@@ -54,7 +54,7 @@ export class TaskParametersUtility {
 }
 
 
-export interface TaskParameters {
+export interface ActionParameters {
     AzureSubscription: string,
     ResourceGroupName?: string;
     Action: string;
