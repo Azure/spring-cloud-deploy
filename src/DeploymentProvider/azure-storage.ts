@@ -12,7 +12,7 @@ export async function uploadFileToSasUrl(uploadUrl: string, localPath: string) {
         });
         console.info('CompletedUploadOf' + localPath);
     } catch (err) {
-        throw err;
+        core.debug(err);
+        throw Error('UploadFileError');
     }
 }
-

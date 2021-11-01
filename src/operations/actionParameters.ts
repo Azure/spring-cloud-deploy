@@ -19,9 +19,9 @@ export class Inputs {
 }
 
 export class Actions {
-    public static readonly deploy = 'Deploy';
-    public static readonly setProduction = 'Set Production';
-    public static readonly deleteStagingDeployment = 'Delete Staging Deployment';
+    public static readonly DEPLOY = 'deploy';
+    public static readonly SET_PRODUCTION = 'set production';
+    public static readonly DELETE_STAGING_DEPLOYMENT = 'delete staging deployment';
 }
 
 export class ActionParametersUtility {
@@ -29,9 +29,8 @@ export class ActionParametersUtility {
         core.debug('Started getParameters');
         var taskParameters: ActionParameters = {
             AzureSubscription: core.getInput(Inputs.azureSubscription, {"required": true}),
-            //ResourceGroupName: core.getInput(Inputs.resourceGroupName, {"required":true}),
             ServiceName: core.getInput(Inputs.serviceName, {"required": true}),
-            Action: core.getInput(Inputs.action, {"required": true}),
+            Action: core.getInput(Inputs.action, {"required": true}).toLowerCase(),
             AppName: core.getInput(Inputs.appName, {"required": true}),
             UseStagingDeployment: core.getInput(Inputs.useStagingDeployment, {"required": true}).toLowerCase() == "true",
             CreateNewDeployment: core.getInput(Inputs.createNewDeployment, {"required": false}).toLowerCase() == "true",
@@ -44,7 +43,7 @@ export class ActionParametersUtility {
         }
 
         //Do not attempt to parse package in non-deployment steps. This causes variable substitution errors.
-        if (taskParameters.Action == Actions.deploy) {
+        if (taskParameters.Action == Actions.DEPLOY) {
             taskParameters.Package = new Package(core.getInput(Inputs.package, {"required": true}));
         }
 

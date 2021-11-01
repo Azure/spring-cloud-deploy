@@ -5,8 +5,15 @@ import * as core from "@actions/core";
 import { parse } from 'azure-actions-utility/parameterParserUtility';
 
 export class DeploymentHelper {
+
+    private static readonly SUCCESS_CODE: Array<number> = [200, 201, 202];
+
     public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.ResourceGroupName, params.ServiceName, params.AppName);
+        core.debug('list deployments response: ' + deployments._response.bodyAsText);
+        if (!this.SUCCESS_CODE.includes(deployments._response.status)) {
+            throw Error('ListDeploymentsError');
+        }
         let ret: string;
         deployments.forEach(deployment => {
             core.debug('deployment str: ' + JSON.stringify(deployment));
@@ -23,8 +30,11 @@ export class DeploymentHelper {
     public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
         let names: Array<string> = [];
         const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.ResourceGroupName, params.ServiceName, params.AppName);
+        core.debug('list deployments response: ' + deployments._response.bodyAsText);
+        if (!this.SUCCESS_CODE.includes(deployments._response.status)) {
+            throw Error('ListDeploymentsError');
+        }
         deployments.forEach(deployment => {
-            console.log("deployment:" + deployment);
             console.log('deployment str: ' + JSON.stringify(deployment));
             names.push(deployment.name);
         });
@@ -37,12 +47,20 @@ export class DeploymentHelper {
                 activeDeploymentName: params.DeploymentName
             }
         };
-        await client.apps.update(params.ResourceGroupName, params.ServiceName, params.AppName, appResource);
+        const updateResponse: Models.AppsUpdateResponse = await client.apps.update(params.ResourceGroupName, params.ServiceName, params.AppName, appResource);
+        core.debug('set active deployment response: ' + updateResponse._response.bodyAsText);
+        if (!this.SUCCESS_CODE.includes(updateResponse._response.status)) {
+            throw Error('SetActiveDeploymentError');
+        }
         return;
     }
 
     public static async deploy(client: AppPlatformManagementClient, params: ActionParameters, sourceType: string, fileToUpload: string) {
         let uploadResponse: Models.AppsGetResourceUploadUrlResponse = await client.apps.getResourceUploadUrl(params.ResourceGroupName, params.ServiceName, params.AppName);
+        core.debug('request upload url response: ' + uploadResponse._response.bodyAsText);
+        if (uploadResponse._response.status in this.SUCCESS_CODE) {
+            throw Error('RequestUploadUrlError');
+        }
         await uploadFileToSasUrl(uploadResponse.uploadUrl, fileToUpload);
         let transformedEnvironmentVariables = {};
         if (params.EnvironmentVariables) {
@@ -69,14 +87,21 @@ export class DeploymentHelper {
                 }
             }
         }
-        core.debug("deploymentResource:" + JSON.stringify(deploymentResource));
+        core.debug("deploymentResource: " + JSON.stringify(deploymentResource));
         const response = await client.deployments.createOrUpdate(params.ResourceGroupName, params.ServiceName, params.AppName, params.DeploymentName, deploymentResource);
-        core.debug("deployment response:\n" + response._response.bodyAsText);
+        core.debug('deploy response: ' + response._response.bodyAsText);
+        if (!this.SUCCESS_CODE.includes(response._response.status)) {
+            throw Error('DeployError');
+        }
         return;
     }
 
     public static async deleteDeployment(client: AppPlatformManagementClient, params: ActionParameters) {
-        await client.deployments.deleteMethod(params.ResourceGroupName, params.ServiceName, params.AppName, params.DeploymentName);
+        const response = await client.deployments.deleteMethod(params.ResourceGroupName, params.ServiceName, params.AppName, params.DeploymentName);
+        core.debug('delete deployment response: ' + response._response.bodyAsText);
+        if (!this.SUCCESS_CODE.includes(response._response.status)) {
+            throw Error('DeleteDeploymentError');
+        }
         return;
     }
 }

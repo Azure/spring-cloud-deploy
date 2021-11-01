@@ -7,7 +7,6 @@ jest.mock('@azure/identity');
 jest.mock('@actions/core');
 
 describe('Test azure-spring-cloud-deployment-helper', () => {
-
     afterEach(() => {
         jest.restoreAllMocks();
     })

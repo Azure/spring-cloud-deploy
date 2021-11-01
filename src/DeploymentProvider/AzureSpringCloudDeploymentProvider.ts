@@ -5,7 +5,7 @@ import { Actions, ActionParameters, ActionParametersUtility } from '../operation
 import { AppPlatformManagementClient, AppPlatformManagementModels as Models } from '@azure/arm-appplatform'
 import { getDefaultAzureCredential } from '@azure/identity'
 import { DeploymentHelper as dh } from "./DeploymentHelper";
-import tar = require('tar');
+import * as tar from 'tar';
 
 export class AzureSpringCloudDeploymentProvider {
 
@@ -29,22 +29,20 @@ export class AzureSpringCloudDeploymentProvider {
             }
         });
         if (!filteredResources || filteredResources.length == 0) {
-            throw new Error('ResourceDoesntExist' + this.params.ServiceName);
+            throw new Error('ResourceDoesntExist: ' + this.params.ServiceName);
         }
         else if (filteredResources.length == 1) {
-            const beginStr = '/resourceGroups/';
-            const endStr = '/providers/Microsoft.AppPlatform/Spring'
-            const beginIndex = filteredResources[0].id.indexOf(beginStr) + beginStr.length;
-            const endIndex = filteredResources[0].id.indexOf(endStr);
-            if (beginIndex == -1 || endIndex == -1 || beginIndex >= endIndex) {
+            const reg = new RegExp('(?<=/resourceGroups/).*?(?=/providers/Microsoft.AppPlatform/Spring/)', 'i')
+            const match = filteredResources[0].id.match(reg);
+            if (!match || match.length != 1) {
                 core.debug('ResourceGroupNameParseErrorWithId:' + filteredResources[0].id);
                 throw new Error('ResourceGroupNameParseError');
             }
-            this.params.ResourceGroupName = filteredResources[0].id.substring(beginIndex, endIndex);
+            this.params.ResourceGroupName = match[0];
             core.debug("resource group name: " + this.params.ResourceGroupName);
         }
         else { //Should never ever ever happen
-            throw new Error('DuplicateAzureSpringCloudName');
+            throw new Error('DuplicateAzureSpringCloudName: ' + this.params.ServiceName);
         }
         const serviceResponse = await this.client.services.get(this.params.ResourceGroupName, this.params.ServiceName);
         core.debug("service response: " + serviceResponse._response.bodyAsText);
@@ -53,23 +51,23 @@ export class AzureSpringCloudDeploymentProvider {
     public async DeployAppStep() {
         switch (this.params.Action) {
 
-            case Actions.deploy: {
+            case Actions.DEPLOY: {
                 await this.performDeployAction();
                 break;
             }
 
-            case Actions.setProduction: {
+            case Actions.SET_PRODUCTION: {
                 await this.performSetProductionAction();
                 break;
             }
 
-            case Actions.deleteStagingDeployment: {
+            case Actions.DELETE_STAGING_DEPLOYMENT: {
                 await this.performDeleteStagingDeploymentAction();
                 break;
             }
 
             default:
-                throw Error('UnknownOrUnsupportedAction' + this.params.Action);
+                throw Error('UnknownOrUnsupportedAction: ' + this.params.Action);
         }
     }
 
@@ -77,7 +75,7 @@ export class AzureSpringCloudDeploymentProvider {
         console.log('Delete staging deployment action');
         const deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
         this.params.DeploymentName = deploymentName;
-        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
+        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
         if (deploymentName) {
             await dh.deleteDeployment(this.client, this.params);
         } else {
@@ -106,7 +104,7 @@ export class AzureSpringCloudDeploymentProvider {
                 throw Error('StagingDeploymentWithNameNotExist:' + deploymentName);
             }
         }
-        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
+        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
         await dh.setActiveDeployment(this.client, this.params);
         console.log('Set production action successful');
     }
@@ -117,9 +115,9 @@ export class AzureSpringCloudDeploymentProvider {
         let sourceType: string = this.determineSourceType(this.params.Package);
 
         //If uploading a source folder, compress to tar.gz file.
-        let fileToUpload: string = sourceType == SourceType.SOURCE_DIRECTORY ?
-            await this.compressSourceDirectory(this.params.Package.getPath()) :
-            this.params.Package.getPath();
+        let fileToUpload: string = sourceType == SourceType.SOURCE_DIRECTORY
+            ? await this.compressSourceDirectory(this.params.Package.getPath())
+            : this.params.Package.getPath();
 
 
         let deploymentName: string;
@@ -143,18 +141,18 @@ export class AzureSpringCloudDeploymentProvider {
                 core.debug(`Deployment ${deploymentName} does not exist`);
                 if (this.params.CreateNewDeployment) {
                     if (deploymentNames.length > 1) {
-                        throw Error('TwoDeploymentsAlreadyExistCannotCreate' + deploymentName);
+                        throw Error('TwoDeploymentsAlreadyExistCannotCreate: ' + deploymentName);
                     } else {
                         core.debug('Deployment will be created.');
                     }
                 } else {
-                    throw Error('DeploymentDoesntExist' + deploymentName);
+                    throw Error('DeploymentDoesntExist: ' + deploymentName);
                 }
 
             }
         }
         try {
-            console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} deployment ${deploymentName}`);
+            console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
             await dh.deploy(this.client, this.params, sourceType, fileToUpload);
             console.log('Deploy action successful');
         } catch (error) {
@@ -194,7 +192,7 @@ export class AzureSpringCloudDeploymentProvider {
                 sourceType = SourceType.JAR;
                 break;
             default:
-                throw Error('UnsupportedSourceType' + pkg.getPath());
+                throw Error('UnsupportedSourceType: ' + pkg.getPath());
         }
         return sourceType;
     }
