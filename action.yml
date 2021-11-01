@@ -27,7 +27,7 @@ inputs:
     description: 'The deployment to which this task will apply. Lowercase letters and numbers only; must start with a letter.'
     required: false
   package:
-    description: "File path to the package or a folder containing the Spring Cloud app contents.<br />Variables ( [Build](https://docs.microsoft.com/vsts/pipelines/build/variables) | [Release](https://docs.microsoft.com/vsts/pipelines/release/variables#default-variables)), wildcards are supported. <br/> For example, ${{ github.workspace }}/\\*\\*/\\*.jar."
+    description: "File path to the package or a folder containing the Spring Cloud app contents."
     required: false
     default: '${{ github.workspace }}/**/*.jar'
   environment-variables:
