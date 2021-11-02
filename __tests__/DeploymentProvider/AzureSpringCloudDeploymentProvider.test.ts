@@ -1,5 +1,5 @@
 
-import {ActionParameters, ActionParametersUtility} from "../../src/operations/actionParameters";
+import {ActionParameters, ActionParametersUtility} from "../../src/operations/ActionParameters";
 import {DeploymentHelper} from "../../src/DeploymentProvider/DeploymentHelper";
 import {AzureSpringCloudDeploymentProvider} from "../../src/DeploymentProvider/AzureSpringCloudDeploymentProvider";
 
@@ -16,29 +16,29 @@ describe('Test azure-spring-cloud-deployment-provider', () => {
 
     test("set active deployment", async () => {
         const params: ActionParameters = {
-            AzureSubscription: 'AzureSubscription',
-            ServiceName: 'ServiceName',
-            Action: 'set production',
-            AppName: 'AppName'
+            azureSubscription: 'AzureSubscription',
+            serviceName: 'ServiceName',
+            action: 'set production',
+            appName: 'AppName'
         }
         const actionParamsSpy = jest.spyOn(ActionParametersUtility, 'getParameters').mockReturnValue(params);
         let provider: AzureSpringCloudDeploymentProvider = new AzureSpringCloudDeploymentProvider();
-        await provider.DeployAppStep();
+        await provider.deployAppStep();
         expect(DeploymentHelper.setActiveDeployment).toBeCalledTimes(1);
         expect(DeploymentHelper.getStagingDeploymentName).toBeCalledTimes(1);
     });
 
     test("delete staging deployment", async () => {
         const params: ActionParameters = {
-            AzureSubscription: 'AzureSubscription',
-            ServiceName: 'ServiceName',
-            Action: 'delete staging deployment',
-            AppName: 'AppName'
+            azureSubscription: 'AzureSubscription',
+            serviceName: 'ServiceName',
+            action: 'delete staging deployment',
+            appName: 'AppName'
         }
         const actionParamsSpy = jest.spyOn(ActionParametersUtility, 'getParameters').mockReturnValue(params);
         const stagingSpy = jest.spyOn(DeploymentHelper, 'getStagingDeploymentName').mockImplementation( async () => 'staging');
         let provider: AzureSpringCloudDeploymentProvider = new AzureSpringCloudDeploymentProvider();
-        await provider.DeployAppStep();
+        await provider.deployAppStep();
         expect(DeploymentHelper.deleteDeployment).toBeCalledTimes(1);
         expect(DeploymentHelper.getStagingDeploymentName).toBeCalledTimes(1);
     });

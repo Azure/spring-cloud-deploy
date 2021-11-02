@@ -106,7 +106,7 @@ jobs:
           package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
 ```
 
-For more on blue-green deployments, including an alternative approach, see [Blue-green deployment strategies](/azure/spring-cloud/concepts-blue-green-deployment-strategies).
+For more on blue-green deployments, including an alternative approach, see [Blue-green deployment strategies](https://docs.microsoft.com/en-us/azure/spring-cloud/concepts-blue-green-deployment-strategies).
 
 ### Setting production deployment
 

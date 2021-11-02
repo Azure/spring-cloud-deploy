@@ -1,6 +1,6 @@
 import { AppPlatformManagementClient, AppPlatformManagementModels as Models } from '@azure/arm-appplatform'
 import * as identity from '@azure/identity'
-import {ActionParameters, ActionParametersUtility} from "../../src/operations/actionParameters";
+import {ActionParameters, ActionParametersUtility} from "../../src/operations/ActionParameters";
 import {DeploymentHelper} from "../../src/DeploymentProvider/DeploymentHelper";
 
 jest.mock('@azure/identity');
