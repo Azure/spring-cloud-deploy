@@ -13,6 +13,7 @@ export class AzureSpringCloudDeploymentProvider {
 
     params: ActionParameters;
     client: AppPlatformManagementClient;
+    logDetail: string;
 
     constructor() {
         this.params = ActionParametersUtility.getParameters();
@@ -24,28 +25,29 @@ export class AzureSpringCloudDeploymentProvider {
         const serviceList = await this.client.services.listBySubscription();
         let filteredResources: Array<Models.ServiceResource> = [];
         serviceList.forEach(service => {
-            if(service.name == this.params.ServiceName) {
+            if (service.name == this.params.ServiceName) {
                 filteredResources.push(service);
             }
         });
         if (!filteredResources || filteredResources.length == 0) {
             throw new Error('ResourceDoesntExist: ' + this.params.ServiceName);
-        }
-        else if (filteredResources.length == 1) {
+        } else if (filteredResources.length == 1) {
             const reg = new RegExp('(?<=/resourceGroups/).*?(?=/providers/Microsoft.AppPlatform/Spring/)', 'i')
             const match = filteredResources[0].id.match(reg);
             if (!match || match.length != 1) {
-                core.debug('ResourceGroupNameParseErrorWithId:' + filteredResources[0].id);
-                throw new Error('ResourceGroupNameParseError');
+                throw new Error('ResourceGroupNameParseErrorWithId:' + filteredResources[0].id);
             }
             this.params.ResourceGroupName = match[0];
-            core.debug("resource group name: " + this.params.ResourceGroupName);
-        }
-        else { //Should never ever ever happen
+            console.log('service resource group name: ' + this.params.ResourceGroupName);
+        } else { //Should never ever ever happen
             throw new Error('DuplicateAzureSpringCloudName: ' + this.params.ServiceName);
         }
         const serviceResponse = await this.client.services.get(this.params.ResourceGroupName, this.params.ServiceName);
         core.debug("service response: " + serviceResponse._response.bodyAsText);
+        if (serviceResponse._response.status != 200) {
+            throw Error('GetServiceError: ' + this.params.ServiceName);
+        }
+        this.logDetail = `for service ${this.params.ServiceName} app ${this.params.AppName}`;
     }
 
     public async DeployAppStep() {
@@ -72,46 +74,42 @@ export class AzureSpringCloudDeploymentProvider {
     }
 
     private async performDeleteStagingDeploymentAction() {
-        console.log('Delete staging deployment action');
         const deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
         this.params.DeploymentName = deploymentName;
-        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
         if (deploymentName) {
+            console.log(`Delete staging deployment action ${this.logDetail} to deployment ${deploymentName}`);
             await dh.deleteDeployment(this.client, this.params);
         } else {
-            throw Error('NoStagingDeploymentFound');
+            throw Error(`No staging deployment ${this.logDetail}`);
         }
         console.log('Delete staging deployment action successful');
         return deploymentName;
     }
 
     private async performSetProductionAction() {
-        console.log('Set production action');
         let deploymentName: string;
         if (this.params.UseStagingDeployment) {
-            core.debug('Targeting inactive deployment');
+            console.log('Targeting staging deployment');
             deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
             this.params.DeploymentName = deploymentName;
             if (!deploymentName) { //If no inactive deployment exists, we cannot continue as instructed.
-                throw Error('NoStagingDeploymentFound');
+                throw Error(`No staging deployment ${this.logDetail}`);
             }
-        }
-        else {
+        } else {
             //Verify that the named deployment actually exists.
+            console.log('Targeting specific deployment name');
             deploymentName = this.params.DeploymentName;
             let existingStagingDeploymentName: string = await dh.getStagingDeploymentName(this.client, this.params);
             if (deploymentName != existingStagingDeploymentName) {
-                throw Error('StagingDeploymentWithNameNotExist:' + deploymentName);
+                throw Error(`Staging deployment with name not exist ${this.logDetail} to deployment ${deploymentName}`);
             }
         }
-        console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
+        console.log(`Set production action ${this.logDetail} to deployment ${deploymentName}`);
         await dh.setActiveDeployment(this.client, this.params);
         console.log('Set production action successful');
     }
 
     private async performDeployAction() {
-        console.log('Deploy action');
-
         let sourceType: string = this.determineSourceType(this.params.Package);
 
         //If uploading a source folder, compress to tar.gz file.
@@ -125,45 +123,44 @@ export class AzureSpringCloudDeploymentProvider {
             deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
 
             if (!deploymentName) { //If no inactive deployment exists
-                core.debug('No inactive deployment exists');
+                console.log('No inactive deployment exists');
                 if (this.params.CreateNewDeployment) {
-                    core.debug('New deployment will be created');
+                    console.log('New deployment will be created');
                     deploymentName = this.defaultInactiveDeploymentName; //Create a new deployment with the default name.
                     this.params.DeploymentName = deploymentName;
                 } else
-                    throw Error('NoStagingDeploymentFound');
+                    throw Error(`No staging deployment ${this.logDetail}`);
             }
         } else { //Deploy to deployment with specified name
-            core.debug('Deploying with specified name.');
+            console.log('Deploying with specified name.');
             deploymentName = this.params.DeploymentName;
-            let deploymentNames : Array<string> = await dh.getAllDeploymentsName(this.client, this.params);
+            let deploymentNames: Array<string> = await dh.getAllDeploymentsName(this.client, this.params);
             if (!deploymentNames || !deploymentNames.includes(deploymentName)) {
-                core.debug(`Deployment ${deploymentName} does not exist`);
+                console.log(`Deployment ${deploymentName} does not exist`);
                 if (this.params.CreateNewDeployment) {
                     if (deploymentNames.length > 1) {
-                        throw Error('TwoDeploymentsAlreadyExistCannotCreate: ' + deploymentName);
+                        throw Error(`Two deployments already exist ${this.logDetail}`);
                     } else {
-                        core.debug('Deployment will be created.');
+                        console.log('New Deployment will be created.');
                     }
                 } else {
-                    throw Error('DeploymentDoesntExist: ' + deploymentName);
+                    throw Error(`Deployment doesn\'t exist ${this.logDetail} to deployment ${deploymentName}`);
                 }
 
             }
         }
-        try {
-            console.log(`Action for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
-            await dh.deploy(this.client, this.params, sourceType, fileToUpload);
-            console.log('Deploy action successful');
-        } catch (error) {
-            throw error;
-        }
+
+        console.log(`Deploy for service ${this.params.ServiceName} app ${this.params.AppName} to deployment ${deploymentName}`);
+        await dh.deploy(this.client, this.params, sourceType, fileToUpload);
+        console.log('Deploy action successful');
+
     }
 
     /**
      * Compresses sourceDirectoryPath into a tar.gz
-     * @param sourceDirectoryPath 
+     * @param sourceDirectoryPath
      */
+    //todo pack source code ignore some files
     async compressSourceDirectory(sourceDirectoryPath: string): Promise<string> {
         const fileName = `${uuidv4()}.tar.gz`;
         core.debug(`CompressingSourceDirectory ${sourceDirectoryPath} ${fileName}`);

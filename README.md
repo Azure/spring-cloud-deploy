@@ -5,7 +5,7 @@ GitHub Actions support an automated software development lifecycle workflow. Wit
 ## Prerequisites
 ### Set up GitHub repository and authenticate
 
-You need an Azure service principal credential to authorize Azure login action. To get an Azure credential, execute the following commands on your local machine:
+You need an [Azure service principal credential](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) to authorize Azure login action. To get an Azure credential, execute the following commands on your local machine:
 ```azurecli
 az login
 az ad sp create-for-rbac --role contributor --scopes /subscriptions/<SUBSCRIPTION_ID> --sdk-auth
@@ -34,39 +34,6 @@ The command should output a JSON object:
 * Authenticate using the [Azure Login Action](https://github.com/Azure/login) with the Azure service principal credential prepared as mentioned above. Examples are given later in this article.
 
 ## End-to-End Sample Workflows
-### Deleting a staging deployment
-
-The "Delete Staging Deployment" action allows you to delete the deployment not receiving production traffic. This frees up resources used by that deployment and makes room for a new staging deployment:
-
-```yml
-name: AzureSpringCloud
-on: push
-env:
-  ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
-
-jobs:
-  delete_staging_deployment:
-    runs-on: ubuntu-latest
-    name: Delete staging deployment
-    steps:
-      - name: Checkout Github Action
-        uses: actions/checkout@master
-
-      - name: Login via Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Delete staging deployment step
-        uses: azure/spring-cloud-git-action@v1
-        with:
-          azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Delete Staging Deployment
-          service-name: <service instance name>
-          app-name: <app name>
-```
-
 ### Deploying
 #### To production
 
@@ -173,6 +140,38 @@ jobs:
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: true
+```
+### Deleting a staging deployment
+
+The "Delete Staging Deployment" action allows you to delete the deployment not receiving production traffic. This frees up resources used by that deployment and makes room for a new staging deployment:
+
+```yml
+name: AzureSpringCloud
+on: push
+env:
+  ASC_PACKAGE_PATH: ${{ github.workspace }}
+  AZURE_SUBSCRIPTION: <azure subscription name>
+
+jobs:
+  delete_staging_deployment:
+    runs-on: ubuntu-latest
+    name: Delete staging deployment
+    steps:
+      - name: Checkout Github Action
+        uses: actions/checkout@master
+
+      - name: Login via Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Delete staging deployment step
+        uses: azure/spring-cloud-git-action@v1
+        with:
+          azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
+          action: Delete Staging Deployment
+          service-name: <service instance name>
+          app-name: <app name>
 ```
 
 ## Contributing

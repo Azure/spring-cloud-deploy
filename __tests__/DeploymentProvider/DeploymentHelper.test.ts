@@ -25,8 +25,16 @@ describe('Test azure-spring-cloud-deployment-helper', () => {
             },
             name: 'production'
         }
-    ]
-    clientMock.deployments.list = jest.fn().mockReturnValue(deploymentListMock as Models.DeploymentResourceCollection);
+    ];
+    let responseMock: Models.DeploymentsListResponse = deploymentListMock as Models.DeploymentsListResponse
+    responseMock._response = {
+        headers: undefined,
+        request: undefined,
+        status: 200,
+        bodyAsText: '',
+        parsedBody: deploymentListMock
+    }
+    clientMock.deployments.list = jest.fn().mockReturnValue(responseMock);
     test("get staging deployment name", async () => {
         const stagingName = await DeploymentHelper.getStagingDeploymentName(clientMock, paramsMock);
         expect(stagingName).toBe('staging');

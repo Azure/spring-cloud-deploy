@@ -18,10 +18,10 @@ export class DeploymentHelper {
         deployments.forEach(deployment => {
             core.debug('deployment str: ' + JSON.stringify(deployment));
             if (deployment.properties.active == false) {
-                core.debug("inactive deployment name:" + deployment.name);
+                core.debug("inactive deployment name: " + deployment.name);
                 ret = deployment.name;
             } else {
-                core.debug("active deployment name:" + deployment.name);
+                core.debug("active deployment name: " + deployment.name);
             }
         });
         return ret;
@@ -35,7 +35,6 @@ export class DeploymentHelper {
             throw Error('ListDeploymentsError');
         }
         deployments.forEach(deployment => {
-            console.log('deployment str: ' + JSON.stringify(deployment));
             names.push(deployment.name);
         });
         return names;

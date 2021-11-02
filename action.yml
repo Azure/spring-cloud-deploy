@@ -24,7 +24,7 @@ inputs:
     required: false
     default: false
   deployment-name:
-    description: 'The deployment to which this task will apply. Lowercase letters and numbers only; must start with a letter.'
+    description: 'The deployment to which this task will apply. Lowercase letters, - and numbers only; must start with a letter.'
     required: false
   package:
     description: "File path to the package or a folder containing the Spring Cloud app contents."
