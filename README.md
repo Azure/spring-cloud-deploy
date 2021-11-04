@@ -20,11 +20,11 @@ The command should output a JSON object:
 
 ```json
 {
-    "clientId": "<GUID>",
-    "clientSecret": "<GUID>",
-    "subscriptionId": "<GUID>",
-    "tenantId": "<GUID>",
-    ...
+  "clientId": "<GUID>",
+  "clientSecret": "<GUID>",
+  "subscriptionId": "<GUID>",
+  "tenantId": "<GUID>",
+  ...
 }
 ```
 
@@ -36,8 +36,51 @@ The command should output a JSON object:
 ## End-to-End Sample Workflows
 ### Deploying
 #### To production
+Azure Spring Cloud support two ways of launching applications, directly from java source code or from a pre-built JAR. Examples as follows.  
+The following example deploys to the default production deployment in Azure Spring Cloud using jars built by maven. This is the only possible deployment scenario when using the Basic SKU:
 
-The following example deploys to the default production deployment in Azure Spring Cloud. This is the only possible deployment scenario when using the Basic SKU:
+```yml
+name: AzureSpringCloud
+on: push
+env:
+  ASC_PACKAGE_PATH: ${{ github.workspace }}
+  AZURE_SUBSCRIPTION: <azure subscription name>
+
+jobs:
+  deploy_to_production:
+    runs-on: ubuntu-latest
+    name: deploy to production
+    steps:
+      - name: Checkout Github Action
+        uses: actions/checkout@master
+        
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: maven build, clean
+        run: |
+          mvn clean package -DskipTests
+
+      - name: Login via Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: deploy to production step
+        uses: azure/spring-cloud-deploy@v1
+        with:
+          azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
+          action: Deploy
+          service-name: <service instance name>
+          app-name: <app name>
+          use-staging-deployment: false
+          deployment-name: default
+          package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
+```
+
+The following example deploys to the default production deployment in Azure Spring Cloud using source code.
 
 ```yml
 name: AzureSpringCloud
@@ -60,7 +103,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: deploy to production step
-        uses: azure/spring-cloud-git-action@v1
+        uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
           action: Deploy
@@ -68,41 +111,34 @@ jobs:
           app-name: <app name>
           use-staging-deployment: false
           deployment-name: default
-          package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
+          package: ${{ env.ASC_PACKAGE_PATH }}
 ```
 
 #### Blue-green
 
-The following example deploys to a pre-existing staging deployment. This deployment will not receive production traffic until it is set as a production deployment.
+The following examples deploys to a pre-existing staging deployment. This deployment will not receive production traffic until it is set as a production deployment. You can set use-staging-deployment true to find the staging deployment automatically or just allocate specific deployment-name. We will only focus on the spring-cloud-deploy action and leave out the preparatory jobs in the rest of the article.
 
 ```yml
-name: AzureSpringCloud
-on: push
-env:
-  ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
-
-jobs:
-  blue_green_deploy:
-    runs-on: ubuntu-latest
-    name: blue green deploy
-    steps:
-      - name: Checkout Github Action
-        uses: actions/checkout@master
-
-      - name: Login via Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: blue green deploy step
-        uses: azure/spring-cloud-git-action@v1
+      - name: blue green deploy step use-staging-deployment
+        uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
           action: Deploy
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: true
+          package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
+```
+
+```yml
+      - name: blue green deploy step 
+        uses: azure/spring-cloud-deploy@v1
+        with:
+          azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
+          action: Deploy
+          service-name: <service instance name>
+          app-name: <app name>
+          deployment-name: staging
           package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
 ```
 
@@ -113,27 +149,8 @@ For more on blue-green deployments, including an alternative approach, see [Blue
 The following example will set the current staging deployment as production, effectively swapping which deployment will receive production traffic.
 
 ```yml
-name: AzureSpringCloud
-on: push
-env:
-  ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
-
-jobs:
-  set_production_deployment:
-    runs-on: ubuntu-latest
-    name: set production deployment
-    steps:
-      - name: Checkout Github Action
-        uses: actions/checkout@master
-
-      - name: Login via Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: set production deployment step
-        uses: azure/spring-cloud-git-action@v1
+        uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
           action: Set Production
@@ -146,27 +163,8 @@ jobs:
 The "Delete Staging Deployment" action allows you to delete the deployment not receiving production traffic. This frees up resources used by that deployment and makes room for a new staging deployment:
 
 ```yml
-name: AzureSpringCloud
-on: push
-env:
-  ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
-
-jobs:
-  delete_staging_deployment:
-    runs-on: ubuntu-latest
-    name: Delete staging deployment
-    steps:
-      - name: Checkout Github Action
-        uses: actions/checkout@master
-
-      - name: Login via Azure CLI
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Delete staging deployment step
-        uses: azure/spring-cloud-git-action@v1
+        uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
           action: Delete Staging Deployment
@@ -190,8 +188,8 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
