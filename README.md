@@ -49,7 +49,7 @@ env:
 jobs:
   deploy_to_production:
     runs-on: ubuntu-latest
-    name: deploy to production
+    name: deploy to production with artifact
     steps:
       - name: Checkout Github Action
         uses: actions/checkout@master
@@ -68,7 +68,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: deploy to production step
+      - name: deploy to production step with artifact
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
@@ -92,7 +92,7 @@ env:
 jobs:
   deploy_to_production:
     runs-on: ubuntu-latest
-    name: deploy to production
+    name: deploy to production with soruce code
     steps:
       - name: Checkout Github Action
         uses: actions/checkout@master
@@ -102,7 +102,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: deploy to production step
+      - name: deploy to production step with soruce code
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
@@ -131,7 +131,7 @@ The following examples deploys to a pre-existing staging deployment. This deploy
 ```
 
 ```yml
-      - name: blue green deploy step 
+      - name: blue green deploy step with deployment-name
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
