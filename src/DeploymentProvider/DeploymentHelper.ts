@@ -29,9 +29,6 @@ export class DeploymentHelper {
                 core.debug("active deployment name: " + deployment.name);
             }
         });
-        if (ret.length == 2) {
-            throw Error('Two staging deployment')
-        }
         return ret;
     }
 
