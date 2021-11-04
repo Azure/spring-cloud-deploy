@@ -74,8 +74,11 @@ export class AzureSpringCloudDeploymentProvider {
     }
 
     private async performDeleteStagingDeploymentAction() {
-        const deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
-        this.params.deploymentName = deploymentName;
+        let deploymentName = this.params.deploymentName;
+        if (!deploymentName) {
+            deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
+            this.params.deploymentName = deploymentName;
+        }
         if (deploymentName) {
             console.log(`Delete staging deployment action ${this.logDetail} to deployment ${deploymentName}.`);
             await dh.deleteDeployment(this.client, this.params);
@@ -88,7 +91,14 @@ export class AzureSpringCloudDeploymentProvider {
 
     private async performSetProductionAction() {
         let deploymentName: string;
-        if (this.params.useStagingDeployment) {
+        if (this.params.deploymentName) {
+            console.log('Set production deployment to the specific deployment name.');
+            deploymentName = this.params.deploymentName;
+            let existingStagingDeploymentNames: Array<string> = await dh.getStagingDeploymentNames(this.client, this.params);
+            if (!existingStagingDeploymentNames.includes(deploymentName)) {
+                throw Error(`Staging deployment with name not exist ${this.logDetail} to deployment ${deploymentName}.`);
+            }
+        } else if (this.params.useStagingDeployment) {
             console.log('Set production deployment to the current inactive deployment.');
             deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
             this.params.deploymentName = deploymentName;
@@ -96,14 +106,9 @@ export class AzureSpringCloudDeploymentProvider {
                 throw Error(`No staging deployment ${this.logDetail}`);
             }
         } else {
-            //Verify that the named deployment actually exists.
-            console.log('Set production deployment to the specific deployment name.');
-            deploymentName = this.params.deploymentName;
-            let existingStagingDeploymentName: string = await dh.getStagingDeploymentName(this.client, this.params);
-            if (deploymentName != existingStagingDeploymentName) {
-                throw Error(`Staging deployment with name not exist ${this.logDetail} to deployment ${deploymentName}.`);
-            }
+            throw Error(`Set production deployment action should use-staging-deployment or allocate deployment-name`);
         }
+
         console.log(`Set production action ${this.logDetail} to deployment ${deploymentName}`);
         await dh.setActiveDeployment(this.client, this.params);
         console.log('Set production action successful.');
@@ -111,27 +116,13 @@ export class AzureSpringCloudDeploymentProvider {
 
     private async performDeployAction() {
         let sourceType: string = this.determineSourceType(this.params.Package);
-
         //If uploading a source folder, compress to tar.gz file.
         let fileToUpload: string = sourceType == SourceType.SOURCE_DIRECTORY
             ? await this.compressSourceDirectory(this.params.Package.getPath())
             : this.params.Package.getPath();
-
-
         let deploymentName: string;
-        if (this.params.useStagingDeployment) {
-            deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
 
-            if (!deploymentName) { //If no inactive deployment exists
-                console.log('No inactive deployment exists when deploying.');
-                if (this.params.createNewDeployment) {
-                    console.log('New deployment will be created');
-                    deploymentName = this.defaultInactiveDeploymentName; //Create a new deployment with the default name.
-                    this.params.deploymentName = deploymentName;
-                } else
-                    throw Error(`No staging deployment ${this.logDetail}`);
-            }
-        } else { //Deploy to deployment with specified name
+        if (this.params.deploymentName) {
             console.log('Deploying with specified name.');
             deploymentName = this.params.deploymentName;
             let deploymentNames: Array<string> = await dh.getAllDeploymentsName(this.client, this.params);
@@ -146,7 +137,23 @@ export class AzureSpringCloudDeploymentProvider {
                 } else {
                     throw Error(`Deployment doesn\'t exist ${this.logDetail} to deployment ${deploymentName}`);
                 }
-
+            }
+        } else if (this.params.useStagingDeployment) {
+            deploymentName = await dh.getStagingDeploymentName(this.client, this.params);
+            if (!deploymentName) { //If no inactive deployment exists
+                console.log('No inactive deployment exists when deploying.');
+                if (this.params.createNewDeployment) {
+                    console.log('New deployment will be created');
+                    deploymentName = this.defaultInactiveDeploymentName; //Create a new deployment with the default name.
+                    this.params.deploymentName = deploymentName;
+                } else
+                    throw Error(`No staging deployment ${this.logDetail}`);
+            }
+        } else {
+            deploymentName = await dh.getProductionDeploymentName(this.client, this.params);
+            this.params.deploymentName = deploymentName;
+            if(!deploymentName) {
+                throw Error(`Production deployment does not exist`);
             }
         }
 

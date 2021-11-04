@@ -8,32 +8,58 @@ export class DeploymentHelper {
 
     private static readonly SUCCESS_CODE: Array<number> = [200, 201, 202];
 
-    public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
+    private static async listDeployments(client: AppPlatformManagementClient, params: ActionParameters): Promise<Models.DeploymentsListResponse> {
         const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.resourceGroupName, params.serviceName, params.appName);
         core.debug('list deployments response: ' + deployments._response.bodyAsText);
         if (!this.SUCCESS_CODE.includes(deployments._response.status)) {
             throw Error('ListDeploymentsError');
         }
-        let ret: string;
+        return deployments;
+    }
+
+    public static async getStagingDeploymentNames(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
+        const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
+        let ret: Array<string> = [];
         deployments.forEach(deployment => {
             core.debug('deployment str: ' + JSON.stringify(deployment));
             if (deployment.properties.active == false) {
                 core.debug("inactive deployment name: " + deployment.name);
-                ret = deployment.name;
+                ret.push(deployment.name);
             } else {
                 core.debug("active deployment name: " + deployment.name);
             }
         });
+        if (ret.length == 2) {
+            throw Error('Two staging deployment')
+        }
         return ret;
+    }
+
+    public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
+        let deploymentNames: Array<string> = await this.getStagingDeploymentNames(client, params);
+        if (deploymentNames.length == 2) {
+            throw Error('Two staging deployments found');
+        }
+        else
+        if (deploymentNames.length == 0) {
+            return null;
+        }
+        return deploymentNames[0];
+    }
+
+    public static async getProductionDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
+        const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
+        deployments.forEach(deployment => {
+            if (deployment.properties.active == true) {
+                return deployment.name;
+            }
+        });
+        return null;
     }
 
     public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
         let names: Array<string> = [];
-        const deployments: Models.DeploymentsListResponse = await client.deployments.list(params.resourceGroupName, params.serviceName, params.appName);
-        core.debug('list deployments response: ' + deployments._response.bodyAsText);
-        if (!this.SUCCESS_CODE.includes(deployments._response.status)) {
-            throw Error('ListDeploymentsError');
-        }
+        const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
         deployments.forEach(deployment => {
             names.push(deployment.name);
         });
