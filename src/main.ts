@@ -11,4 +11,8 @@ export async function main() {
   await deploymentProvider.deployAppStep();
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  core.setFailed(error.message);
+}

@@ -37,8 +37,7 @@ export class DeploymentHelper {
         if (deploymentNames.length == 2) {
             throw Error('Two staging deployments found');
         }
-        else
-        if (deploymentNames.length == 0) {
+        else if (deploymentNames.length == 0) {
             return null;
         }
         return deploymentNames[0];
@@ -47,7 +46,7 @@ export class DeploymentHelper {
     public static async getProductionDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
         deployments.forEach(deployment => {
-            if (deployment.properties.active == true) {
+            if (deployment.properties.active) {
                 return deployment.name;
             }
         });

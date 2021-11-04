@@ -1,5 +1,5 @@
 # azure spirng cloud action
-name: 'AzureSpringCloud'
+name: 'Azure Spring Cloud'
 description: 'Deploy applications to Azure Spring Cloud and manage deployments.'
 inputs: 
   azure-subscription:
