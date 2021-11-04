@@ -45,12 +45,13 @@ export class DeploymentHelper {
 
     public static async getProductionDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
+        let ret: string;
         deployments.forEach(deployment => {
             if (deployment.properties.active) {
-                return deployment.name;
+                ret = deployment.name;
             }
         });
-        return null;
+        return ret;
     }
 
     public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {

@@ -34,7 +34,7 @@ export class ActionParametersUtility {
             appName: core.getInput(Inputs.APP_NAME, {"required": true}),
             useStagingDeployment: core.getInput(Inputs.USE_STAGING_DEPLOYMENT, {"required": true}).toLowerCase() == "true",
             createNewDeployment: core.getInput(Inputs.CREATE_NEW_DEPLOYMENT, {"required": false}).toLowerCase() == "true",
-            deploymentName: core.getInput(Inputs.DEPLOYMENT_NAME, {"required": !(core.getInput(Inputs.USE_STAGING_DEPLOYMENT, {"required": true}).toLowerCase() == "true")}),
+            deploymentName: core.getInput(Inputs.DEPLOYMENT_NAME, {"required": false}),
             environmentVariables: core.getInput(Inputs.ENVIRONMENT_VARIABLES, {"required": false}),
             jvmOptions: core.getInput(Inputs.JVM_OPTIONS, {"required": false}),
             runtimeVersion: core.getInput(Inputs.RUNTIME_VERSION, {"required": false}),
