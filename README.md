@@ -36,8 +36,8 @@ The command should output a JSON object:
 ## End-to-End Sample Workflows
 ### Deploying
 #### To production
-Azure Spring Cloud support two ways of launching applications, directly from java source code or from a pre-built JAR. Examples as follows.  
-The following example deploys to the default production deployment in Azure Spring Cloud using jars built by maven. This is the only possible deployment scenario when using the Basic SKU:
+Azure Spring Cloud supports deploying to deployments with built artifacts (e.g., JAR or .NET Core ZIP) or source code archive.
+The following example deploys to the default production deployment in Azure Spring Cloud using JAR file built by Maven. This is the only possible deployment scenario when using the Basic SKU:
 
 ```yml
 name: AzureSpringCloud
@@ -61,14 +61,14 @@ jobs:
 
       - name: maven build, clean
         run: |
-          mvn clean package -DskipTests
+          mvn clean package
 
       - name: Login via Azure CLI
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: deploy to production step with artifact
+      - name: deploy to production with artifact
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
@@ -116,9 +116,11 @@ jobs:
 
 #### Blue-green
 
-The following examples deploys to a pre-existing staging deployment. This deployment will not receive production traffic until it is set as a production deployment. You can set use-staging-deployment true to find the staging deployment automatically or just allocate specific deployment-name. We will only focus on the spring-cloud-deploy action and leave out the preparatory jobs in the rest of the article.
+The following examples deploy to an existing staging deployment. This deployment will not receive production traffic until it is set as a production deployment. You can set use-staging-deployment true to find the staging deployment automatically or just allocate specific deployment-name. We will only focus on the spring-cloud-deploy action and leave out the preparatory jobs in the rest of the article.
 
 ```yml
+# environment preparation configurations omitted
+    steps:
       - name: blue green deploy step use-staging-deployment
         uses: azure/spring-cloud-deploy@v1
         with:
@@ -131,6 +133,8 @@ The following examples deploys to a pre-existing staging deployment. This deploy
 ```
 
 ```yml
+# environment preparation configurations omitted
+    steps:
       - name: blue green deploy step with deployment-name
         uses: azure/spring-cloud-deploy@v1
         with:
@@ -142,13 +146,15 @@ The following examples deploys to a pre-existing staging deployment. This deploy
           package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
 ```
 
-For more on blue-green deployments, including an alternative approach, see [Blue-green deployment strategies](https://docs.microsoft.com/en-us/azure/spring-cloud/concepts-blue-green-deployment-strategies).
+For more information on blue-green deployments, including an alternative approach, see [Blue-green deployment strategies](https://docs.microsoft.com/en-us/azure/spring-cloud/concepts-blue-green-deployment-strategies).
 
 ### Setting production deployment
 
 The following example will set the current staging deployment as production, effectively swapping which deployment will receive production traffic.
 
 ```yml
+# environment preparation configurations omitted
+    steps:
       - name: set production deployment step
         uses: azure/spring-cloud-deploy@v1
         with:
@@ -163,6 +169,8 @@ The following example will set the current staging deployment as production, eff
 The "Delete Staging Deployment" action allows you to delete the deployment not receiving production traffic. This frees up resources used by that deployment and makes room for a new staging deployment:
 
 ```yml
+# environment preparation configurations omitted
+    steps:
       - name: Delete staging deployment step
         uses: azure/spring-cloud-deploy@v1
         with:

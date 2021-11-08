@@ -34,10 +34,9 @@ export class DeploymentHelper {
 
     public static async getStagingDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         let deploymentNames: Array<string> = await this.getStagingDeploymentNames(client, params);
-        if (deploymentNames.length == 2) {
-            throw Error('Two staging deployments found');
-        }
-        else if (deploymentNames.length == 0) {
+        if (deploymentNames.length >= 2) {
+            throw Error('More than 1 staging deployments were found: ' + JSON.stringify(deploymentNames));
+        } else if (deploymentNames.length == 0) {
             return null;
         }
         return deploymentNames[0];
@@ -45,13 +44,18 @@ export class DeploymentHelper {
 
     public static async getProductionDeploymentName(client: AppPlatformManagementClient, params: ActionParameters): Promise<string> {
         const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
-        let ret: string;
+        let ret: Array<string> = [];
         deployments.forEach(deployment => {
             if (deployment.properties.active) {
-                ret = deployment.name;
+                ret.push(deployment.name);
             }
         });
-        return ret;
+        if (ret.length >= 2) {
+            throw Error('More than 1 production deployments were found: ' + JSON.stringify(ret));
+        } else if (ret.length == 0) {
+            return null;
+        }
+        return ret[0];
     }
 
     public static async getAllDeploymentsName(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
