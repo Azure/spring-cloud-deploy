@@ -105,7 +105,7 @@ jobs:
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Deploy
+          action: deploy
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: false
@@ -123,7 +123,7 @@ The following examples deploy to an existing staging deployment. This deployment
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Deploy
+          action: deploy
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: true
@@ -137,7 +137,7 @@ The following examples deploy to an existing staging deployment. This deployment
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Deploy
+          action: deploy
           service-name: <service instance name>
           app-name: <app name>
           deployment-name: staging
@@ -157,7 +157,7 @@ The following example will set the current staging deployment as production, eff
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Set Production
+          action: set-production
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: true
@@ -173,7 +173,7 @@ The "Delete Staging Deployment" action allows you to delete the deployment not r
         uses: azure/spring-cloud-deploy@v1
         with:
           azure-subscription: ${{ env.AZURE_SUBSCRIPTION }}
-          action: Delete Staging Deployment
+          action: delete-staging-deployment
           service-name: <service instance name>
           app-name: <app name>
 ```

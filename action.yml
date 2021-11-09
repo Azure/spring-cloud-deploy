@@ -8,7 +8,7 @@ inputs:
   action:
     description: 'Action to be performed on Azure Spring Cloud.'
     required: true
-    default: 'Deploy'
+    default: 'deploy'
   service-name:
     description: 'Select the Azure Spring Cloud service to which to deploy.'
     required: true

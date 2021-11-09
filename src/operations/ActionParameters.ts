@@ -20,8 +20,8 @@ export class Inputs {
 
 export class Actions {
     public static readonly DEPLOY = 'deploy';
-    public static readonly SET_PRODUCTION = 'set production';
-    public static readonly DELETE_STAGING_DEPLOYMENT = 'delete staging deployment';
+    public static readonly SET_PRODUCTION = 'set-production';
+    public static readonly DELETE_STAGING_DEPLOYMENT = 'delete-staging-deployment';
 }
 
 export class ActionParametersUtility {
