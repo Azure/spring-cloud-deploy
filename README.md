@@ -76,7 +76,6 @@ jobs:
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: false
-          deployment-name: default
           package: ${{ env.ASC_PACKAGE_PATH }}/**/*.jar
 ```
 
@@ -110,7 +109,6 @@ jobs:
           service-name: <service instance name>
           app-name: <app name>
           use-staging-deployment: false
-          deployment-name: default
           package: ${{ env.ASC_PACKAGE_PATH }}
 ```
 
