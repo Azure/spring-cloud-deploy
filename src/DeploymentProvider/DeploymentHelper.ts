@@ -6,7 +6,7 @@ import { parse } from 'azure-actions-utility/parameterParserUtility';
 
 export class DeploymentHelper {
 
-    private static readonly CREATE_OR_UPDATE_SUCCESS_CODE: Array<number> = [200, 201];
+    private static readonly CREATE_OR_UPDATE_SUCCESS_CODE: Array<number> = [200];
     private static readonly DELETE_SUCCESS_CODE: Array<number> = [200, 204];
     private static readonly GET_SUCCESS_CODE: Array<number> = [200];
 
