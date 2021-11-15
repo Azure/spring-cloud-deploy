@@ -101,26 +101,40 @@ export class DeploymentHelper {
             core.debug('Environment Variables: ' + JSON.stringify(transformedEnvironmentVariables));
         }
         let getResponse: Models.DeploymentsGetResponse = await client.deployments.get(params.resourceGroupName, params.serviceName, params.appName, params.deploymentName);
-        core.debug('set active deployment response: ' + getResponse._response.bodyAsText);
+        core.debug('get deployment response: ' + getResponse._response.bodyAsText);
         if (!this.GET_SUCCESS_CODE.includes(getResponse._response.status)) {
             throw Error('GetDeploymentError');
         }
-        let deploymentResourcePart: Models.DeploymentResource = {
-            properties: {
-                source: {
-                    relativePath: uploadResponse.relativePath,
-                    type: sourceType as Models.UserSourceType,
-                    version: params.version
-                },
-                deploymentSettings: {
-                    jvmOptions: params.jvmOptions,
-                    netCoreMainEntryPath: params.dotNetCoreMainEntryPath,
-                    runtimeVersion: params.runtimeVersion as Models.RuntimeVersion,
-                    environmentVariables: transformedEnvironmentVariables
-                }
-            }
+        let deploymentResource: Models.DeploymentResource;
+        let sourcePart = {
+            relativePath: uploadResponse.relativePath,
+            type: sourceType as Models.UserSourceType,
+            version: params.version
         };
-        let deploymentResource: Models.DeploymentResource = {...getResponse, ...deploymentResourcePart};
+        let deploymentSettingsPart = {
+            jvmOptions: params.jvmOptions,
+            netCoreMainEntryPath: params.dotNetCoreMainEntryPath,
+            runtimeVersion: params.runtimeVersion as Models.RuntimeVersion,
+            environmentVariables: transformedEnvironmentVariables
+        };
+        if (getResponse) {
+            let source = {...getResponse.properties.source, ...sourcePart};
+            let deploymentSettings = {...getResponse.properties.deploymentSettings, ...deploymentSettingsPart};
+            deploymentResource = {
+                properties: {
+                    source: source,
+                    deploymentSettings: deploymentSettings
+                },
+                sku: getResponse.sku
+            };
+        } else {
+            deploymentResource = {
+                properties: {
+                    source: sourcePart,
+                    deploymentSettings: deploymentSettingsPart
+                }
+            };
+        }
         core.debug("deploymentResource: " + JSON.stringify(deploymentResource));
         const response = await client.deployments.createOrUpdate(params.resourceGroupName, params.serviceName, params.appName, params.deploymentName, deploymentResource);
         core.debug('deploy response: ' + response._response.bodyAsText);
