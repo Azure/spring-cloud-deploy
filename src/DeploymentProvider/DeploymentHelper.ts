@@ -3,6 +3,7 @@ import { AppPlatformManagementClient, AppPlatformManagementModels as Models } fr
 import { uploadFileToSasUrl } from "./azure-storage";
 import * as core from "@actions/core";
 import { parse } from 'azure-actions-utility/parameterParserUtility';
+import {DeploymentsGetResponse} from "@azure/arm-appplatform/src/models/index";
 
 export class DeploymentHelper {
 
@@ -100,7 +101,12 @@ export class DeploymentHelper {
             });
             core.debug('Environment Variables: ' + JSON.stringify(transformedEnvironmentVariables));
         }
-        let deploymentResource: Models.DeploymentResource = {
+        let getResponse: Models.DeploymentsGetResponse = await client.deployments.get(params.resourceGroupName, params.serviceName, params.appName, params.deploymentName);
+        core.debug('set active deployment response: ' + getResponse._response.bodyAsText);
+        if (!this.GET_SUCCESS_CODE.includes(getResponse._response.status)) {
+            throw Error('GetDeploymentError');
+        }
+        let deploymentResourcePart: Models.DeploymentResource = {
             properties: {
                 source: {
                     relativePath: uploadResponse.relativePath,
@@ -114,7 +120,8 @@ export class DeploymentHelper {
                     environmentVariables: transformedEnvironmentVariables
                 }
             }
-        }
+        };
+        let deploymentResource: Models.DeploymentResource = {...getResponse, ...deploymentResourcePart};
         core.debug("deploymentResource: " + JSON.stringify(deploymentResource));
         const response = await client.deployments.createOrUpdate(params.resourceGroupName, params.serviceName, params.appName, params.deploymentName, deploymentResource);
         core.debug('deploy response: ' + response._response.bodyAsText);

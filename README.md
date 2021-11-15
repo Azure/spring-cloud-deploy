@@ -44,7 +44,7 @@ name: AzureSpringCloud
 on: push
 env:
   ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
+  AZURE_SUBSCRIPTION: <azure subscription id>
 
 jobs:
   deploy_to_production:
@@ -86,7 +86,7 @@ name: AzureSpringCloud
 on: push
 env:
   ASC_PACKAGE_PATH: ${{ github.workspace }}
-  AZURE_SUBSCRIPTION: <azure subscription name>
+  AZURE_SUBSCRIPTION: <azure subscription id>
 
 jobs:
   deploy_to_production:
