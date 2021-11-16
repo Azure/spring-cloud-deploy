@@ -3,7 +3,6 @@ import { AppPlatformManagementClient, AppPlatformManagementModels as Models } fr
 import { uploadFileToSasUrl } from "./azure-storage";
 import * as core from "@actions/core";
 import { parse } from 'azure-actions-utility/parameterParserUtility';
-import {deploymentName} from "@azure/arm-appplatform/esm/models/parameters";
 
 export class DeploymentHelper {
 
