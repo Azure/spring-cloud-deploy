@@ -197,6 +197,8 @@ The "Delete Staging Deployment" action allows you to delete the deployment not r
 |`jvm-options`|deploy|Optional| A string containing JVM Options. <br/> Example: `-Dspring.profiles.active=mysql`|
 |`dotnetcore-mainentry-path`|deploy|Optional| A string containing the path to the .NET executable relative to zip root.|
 |`version`|deploy|Optional| The deployment version. If not set, the version is left unchanged.|
+|`cpu`|deploy|Optional| Required CPU. 1 core can be represented by 1 or 1000m. This should be 500m or 1 for Basic tier, and {500m, 1, 2, 3, 4} for Standard tier. Default value: 1.|
+|`memory`|deploy|Optional| Required memory. 1 GB can be represented by 1Gi or 1024Mi. This should be {512Mi, 1Gi, 2Gi} for Basic tier, and {512Mi, 1Gi, 2Gi, ..., 8Gi} for Standard tier. Default value: 1Gi|
 
 ## Contributing
 

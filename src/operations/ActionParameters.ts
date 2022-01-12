@@ -15,6 +15,8 @@ export class Inputs {
     public static readonly RUNTIME_VERSION = 'runtime-version';
     public static readonly DOTNETCORE_MAINENTRY_PATH = 'dotnetcore-mainentry-path';
     public static readonly VERSION = 'version';
+    public static readonly CPU = 'cpu';
+    public static readonly MEMORY = 'memory';
     public static readonly PACKAGE = 'package';
 }
 
@@ -39,7 +41,9 @@ export class ActionParametersUtility {
             jvmOptions: core.getInput(Inputs.JVM_OPTIONS, {"required": false}),
             runtimeVersion: core.getInput(Inputs.RUNTIME_VERSION, {"required": false}),
             dotNetCoreMainEntryPath: core.getInput(Inputs.DOTNETCORE_MAINENTRY_PATH, {"required": false}),
-            version: core.getInput(Inputs.VERSION, {"required": false})
+            version: core.getInput(Inputs.VERSION, {"required": false}),
+            cpu: core.getInput(Inputs.CPU, {"required": false}),
+            memory: core.getInput(Inputs.MEMORY, {"required": false}),
         }
 
         //Do not attempt to parse package in non-deployment steps. This causes variable substitution errors.
@@ -68,4 +72,6 @@ export interface ActionParameters {
     runtimeVersion?: string;
     dotNetCoreMainEntryPath?: string;
     version?: string;
+    cpu?: string;
+    memory?: string;
 }

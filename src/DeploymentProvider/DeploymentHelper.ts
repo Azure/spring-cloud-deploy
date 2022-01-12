@@ -141,6 +141,16 @@ export class DeploymentHelper {
         if (params.runtimeVersion) {
             deploymentSettingsPart.runtimeVersion = params.runtimeVersion as Models.RuntimeVersion;
         }
+        let resourceRequestsPart: Models.ResourceRequests = {
+        };
+        if (params.cpu) {
+            resourceRequestsPart.cpu = params.cpu;
+            deploymentSettingsPart.resourceRequests = resourceRequestsPart;
+        }
+        if (params.memory) {
+            resourceRequestsPart.memory = params.memory;
+            deploymentSettingsPart.resourceRequests = resourceRequestsPart;
+        }
         let transformedEnvironmentVariables = {};
         if (params.environmentVariables) {
             core.debug("Environment variables modified.");
