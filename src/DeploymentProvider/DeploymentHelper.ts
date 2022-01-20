@@ -46,6 +46,14 @@ export class DeploymentHelper {
         return getResponse;
     }
 
+    public static async createOrUpdateApp(client: AppPlatformManagementClient, params: ActionParameters): Promise<void> {
+        const appResource: Models.AppResource = {
+            name: params.appName,
+        };
+        await client.apps.createOrUpdate(params.resourceGroupName, params.serviceName, params.appName, appResource);
+        core.debug(`Application ${params.appName} created or updated`);
+    }
+
     public static async getStagingDeploymentNames(client: AppPlatformManagementClient, params: ActionParameters): Promise<Array<string>> {
         const deployments: Models.DeploymentsListResponse = await this.listDeployments(client, params);
         let ret: Array<string> = [];
@@ -140,6 +148,16 @@ export class DeploymentHelper {
         }
         if (params.runtimeVersion) {
             deploymentSettingsPart.runtimeVersion = params.runtimeVersion as Models.RuntimeVersion;
+        }
+        let resourceRequestsPart: Models.ResourceRequests = {
+        };
+        if (params.cpu) {
+            resourceRequestsPart.cpu = params.cpu;
+            deploymentSettingsPart.resourceRequests = resourceRequestsPart;
+        }
+        if (params.memory) {
+            resourceRequestsPart.memory = params.memory;
+            deploymentSettingsPart.resourceRequests = resourceRequestsPart;
         }
         let transformedEnvironmentVariables = {};
         if (params.environmentVariables) {
