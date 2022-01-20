@@ -122,6 +122,9 @@ export class AzureSpringCloudDeploymentProvider {
             : this.params.Package.getPath();
         let deploymentName: string;
 
+        // Create app if not exist
+        await dh.createOrUpdateApp(this.client, this.params);
+
         if (this.params.deploymentName) {
             console.log(`Deploying for ${this.logDetail} to deployment ${this.params.deploymentName}.`);
             deploymentName = this.params.deploymentName;
