@@ -186,6 +186,7 @@ The "Delete Staging Deployment" action allows you to delete the deployment not r
 |--- |--- |--- |--- |
 |`action`|all|Required| The action to be performed by this task.<br/>One of: `deploy`, `set-production`, `delete-staging-deployment`<br/>Default value: `deploy`|
 |`azure-subscription`|all|Required| The Azure subscription ID for the target Azure Spring Cloud instance.|
+|`resource-group-name`|all|Optional| The Azure Resource Group for the target Azure Spring Cloud instance.|
 |`service-name`|all|Required| The name of the Azure Spring Cloud service instance.|
 |`app-name`|all|Required| The name of the Azure Spring Cloud app to deploy. The app must exist prior to task execution.
 |`use-staging-deployment`|deploy<br/>set-production|Optional| If set to `true`, apply the task to whichever deployment is set as the staging deployment at time of execution. If set to `false`, apply the task to the production deployment.<br/>Default value: `true`|

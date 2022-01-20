@@ -31,6 +31,7 @@ export class ActionParametersUtility {
         core.debug('Started getParameters');
         var taskParameters: ActionParameters = {
             azureSubscription: core.getInput(Inputs.AZURE_SUBSCRIPTION, {"required": true}),
+            resourceGroupName: core.getInput(Inputs.RESOURCE_GROUP_NAME, {"required": false}),
             serviceName: core.getInput(Inputs.SERVICE_NAME, {"required": true}),
             action: core.getInput(Inputs.ACTION, {"required": true}).toLowerCase(),
             appName: core.getInput(Inputs.APP_NAME, {"required": true}),

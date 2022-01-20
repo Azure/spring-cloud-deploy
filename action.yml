@@ -5,6 +5,9 @@ inputs:
   azure-subscription:
     description: 'Select the Azure Resource Manager subscription for the deployment.'
     required: true
+  resource-group-name:
+    description: 'Select the Azure Resource Group for the deployment.'
+    required: false
   action:
     description: 'Action to be performed on Azure Spring Cloud.'
     required: true

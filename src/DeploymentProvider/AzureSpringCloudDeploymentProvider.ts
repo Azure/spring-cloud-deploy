@@ -22,30 +22,32 @@ export class AzureSpringCloudDeploymentProvider {
     public async preDeploymentStep() {
         const token = getDefaultAzureCredential();
         this.client = new AppPlatformManagementClient(token, this.params.azureSubscription);
-        const serviceList = await this.client.services.listBySubscription();
-        let filteredResources: Array<Models.ServiceResource> = [];
-        serviceList.forEach(service => {
-            if (service.name == this.params.serviceName) {
-                filteredResources.push(service);
+        if(!this.params.resourceGroupName) {
+            const serviceList = await this.client.services.listBySubscription();
+            let filteredResources: Array<Models.ServiceResource> = [];
+            serviceList.forEach(service => {
+                if (service.name == this.params.serviceName) {
+                    filteredResources.push(service);
+                }
+            });
+            if (!filteredResources || filteredResources.length == 0) {
+                throw new Error('ResourceDoesntExist: ' + this.params.serviceName);
+            } else if (filteredResources.length == 1) {
+                const reg = new RegExp('(?<=/resourceGroups/).*?(?=/providers/Microsoft.AppPlatform/Spring/)', 'i')
+                const match = filteredResources[0].id.match(reg);
+                if (!match || match.length != 1) {
+                    throw new Error('ResourceGroupNameParseErrorWithId:' + filteredResources[0].id);
+                }
+                this.params.resourceGroupName = match[0];
+                console.log('service resource group name: ' + this.params.resourceGroupName);
+            } else { //Should never ever ever happen
+                throw new Error('DuplicateAzureSpringCloudName: ' + this.params.serviceName);
             }
-        });
-        if (!filteredResources || filteredResources.length == 0) {
-            throw new Error('ResourceDoesntExist: ' + this.params.serviceName);
-        } else if (filteredResources.length == 1) {
-            const reg = new RegExp('(?<=/resourceGroups/).*?(?=/providers/Microsoft.AppPlatform/Spring/)', 'i')
-            const match = filteredResources[0].id.match(reg);
-            if (!match || match.length != 1) {
-                throw new Error('ResourceGroupNameParseErrorWithId:' + filteredResources[0].id);
+            const serviceResponse = await this.client.services.get(this.params.resourceGroupName, this.params.serviceName);
+            core.debug("service response: " + serviceResponse._response.bodyAsText);
+            if (serviceResponse._response.status != 200) {
+                throw Error('GetServiceError: ' + this.params.serviceName);
             }
-            this.params.resourceGroupName = match[0];
-            console.log('service resource group name: ' + this.params.resourceGroupName);
-        } else { //Should never ever ever happen
-            throw new Error('DuplicateAzureSpringCloudName: ' + this.params.serviceName);
-        }
-        const serviceResponse = await this.client.services.get(this.params.resourceGroupName, this.params.serviceName);
-        core.debug("service response: " + serviceResponse._response.bodyAsText);
-        if (serviceResponse._response.status != 200) {
-            throw Error('GetServiceError: ' + this.params.serviceName);
         }
         this.logDetail = `service ${this.params.serviceName} app ${this.params.appName}`;
     }
