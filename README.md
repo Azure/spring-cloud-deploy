@@ -1,4 +1,6 @@
-# GitHub Action for deploying to Azure Spring Cloud
+# GitHub Action for deploying to Azure Spring Cloud (Deprecated)
+
+> **As Azure Spring Cloud has been renamed to Azure Spring Apps, the spring-cloud-deploy GitHub Action is deprecated and is no longer maintained. Please use [spring-apps-deploy](https://github.com/marketplace/actions/azure-spring-apps) instead.**
 
 GitHub Actions support an automated software development lifecycle workflow. With GitHub Actions for Azure Spring Cloud you can create workflows in your repository to manage your deployment of Azure Spring Cloud conveniently.
 
